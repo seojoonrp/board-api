@@ -1,0 +1,31 @@
+package handler
+
+import (
+	"net/http"
+	"seojoonrp/board-api/internal/dto"
+	"seojoonrp/board-api/internal/service"
+
+	"github.com/labstack/echo/v4"
+)
+
+type UserHandler struct {
+	svc service.UserService
+}
+
+func NewUserHandler(svc service.UserService) UserHandler {
+	return UserHandler{svc: svc}
+}
+
+func (h *UserHandler) Login(c echo.Context) error {
+	var req dto.CreateUserRequest
+	if err := c.Bind(&req); err != nil {
+		return err
+	}
+
+	user, err := h.svc.Login(c.Request().Context(), req)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, user) // TODO: Separate Created/OK
+}
