@@ -14,8 +14,10 @@ import (
 )
 
 func main() {
-	uri := getenv("MONGO_URI", "mongodb://localhost:27017")
-	dbName := getenv("MONGO_DB", "board")
+	// TODO: Separate config logic
+	uri := os.Getenv("MONGO_URI")
+	dbName := os.Getenv("MONGO_DB")
+	jwtSecret := os.Getenv("JWT_SECRET")
 
 	db, err := database.Connect(uri, dbName)
 	if err != nil {
@@ -27,7 +29,7 @@ func main() {
 	userRepo := repository.NewUserRepo(db.Collection("users"))
 
 	postSvc := service.NewPostService(postRepo, userRepo)
-	userSvc := service.NewUserService(userRepo)
+	userSvc := service.NewUserService(userRepo, jwtSecret)
 
 	postHandler := handler.NewPostHandler(postSvc)
 	userHandler := handler.NewUserHandler(userSvc)
@@ -37,15 +39,7 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	jwtSecret := getenv("JWT_SECRET", "dev-jwt-secret")
 	server.SetupRoutes(e, postHandler, userHandler, jwtSecret)
 
 	e.Logger.Fatal(e.Start(":8080"))
-}
-
-func getenv(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return fallback
 }

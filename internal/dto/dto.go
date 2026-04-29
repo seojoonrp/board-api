@@ -19,6 +19,11 @@ type CreatePostRequest struct {
 }
 
 // POST /users
-type CreateUserRequest struct {
+type LoginRequest struct {
 	Username string `json:"username"`
+}
+
+type LoginResponse struct {
+	User  UserItem `json:"user"`
+	Token string   `json:"token"`
 }

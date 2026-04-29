@@ -17,15 +17,15 @@ func NewUserHandler(svc service.UserService) UserHandler {
 }
 
 func (h *UserHandler) Login(c echo.Context) error {
-	var req dto.CreateUserRequest
+	var req dto.LoginRequest
 	if err := c.Bind(&req); err != nil {
 		return err
 	}
 
-	user, err := h.svc.Login(c.Request().Context(), req)
+	resp, err := h.svc.Login(c.Request().Context(), req)
 	if err != nil {
 		return err
 	}
 
-	return c.JSON(http.StatusOK, user) // TODO: Separate Created/OK
+	return c.JSON(http.StatusOK, resp) // TODO: Separate Created/OK
 }
