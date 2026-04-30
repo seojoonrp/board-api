@@ -2,11 +2,14 @@ package service
 
 import (
 	"context"
+	"errors"
+	"seojoonrp/board-api/internal/apperror"
 	"seojoonrp/board-api/internal/domain"
 	"seojoonrp/board-api/internal/dto"
 	"seojoonrp/board-api/internal/repository"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type PostService interface {
@@ -28,7 +31,7 @@ func NewPostService(postRepo repository.PostRepo, userRepo repository.UserRepo) 
 func (s *postService) Create(ctx context.Context, req dto.CreatePostRequest, userID string) (*dto.PostItem, error) {
 	uID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
-		return nil, err // TODO: Error code
+		return nil, apperror.NewBadRequest("invalid user id:" + userID)
 	}
 
 	newPost := domain.Post{
@@ -41,7 +44,7 @@ func (s *postService) Create(ctx context.Context, req dto.CreatePostRequest, use
 
 	err = s.postRepo.Save(ctx, newPost)
 	if err != nil {
-		return nil, err
+		return nil, apperror.NewInternal(err)
 	}
 
 	return &dto.PostItem{
@@ -55,7 +58,7 @@ func (s *postService) Create(ctx context.Context, req dto.CreatePostRequest, use
 func (s *postService) GetAll(ctx context.Context) ([]dto.PostItem, error) {
 	posts, err := s.postRepo.FindAll(ctx)
 	if err != nil {
-		return nil, err
+		return nil, apperror.NewInternal(err)
 	}
 
 	items := make([]dto.PostItem, 0, len(posts))
@@ -74,12 +77,12 @@ func (s *postService) GetAll(ctx context.Context) ([]dto.PostItem, error) {
 func (s *postService) GetByUserID(ctx context.Context, userID string) ([]dto.PostItem, error) {
 	uID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
-		return nil, err // TODO: Error code
+		return nil, apperror.NewBadRequest("invalid user id: " + userID)
 	}
 
 	posts, err := s.postRepo.FindAllByUserID(ctx, uID)
 	if err != nil {
-		return nil, err
+		return nil, apperror.NewInternal(err)
 	}
 
 	items := make([]dto.PostItem, 0, len(posts))
@@ -98,18 +101,21 @@ func (s *postService) GetByUserID(ctx context.Context, userID string) ([]dto.Pos
 func (s *postService) Get(ctx context.Context, id string) (*dto.PostItem, error) {
 	pID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return nil, err // TODO: Error code
+		return nil, apperror.NewBadRequest("invalid post id: " + id)
 	}
 
 	post, err := s.postRepo.FindByID(ctx, pID)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, apperror.NewNotFound("post not found: " + id)
+		}
+		return nil, apperror.NewInternal(err)
 	}
 
 	// TODO: Transaction
 	err = s.postRepo.IncrementView(ctx, pID)
 	if err != nil {
-		return nil, err
+		return nil, apperror.NewInternal(err)
 	}
 	post.View++
 

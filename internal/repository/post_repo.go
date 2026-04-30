@@ -56,13 +56,13 @@ func (r *postRepo) FindByID(ctx context.Context, id primitive.ObjectID) (*domain
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	var post *domain.Post
+	var post domain.Post
 	err := r.coll.FindOne(ctx, bson.M{"_id": id}).Decode(&post)
 	if err != nil {
 		return nil, err
 	}
 
-	return post, nil
+	return &post, nil
 }
 
 func (r *postRepo) FindAllByUserID(ctx context.Context, userID primitive.ObjectID) ([]domain.Post, error) {

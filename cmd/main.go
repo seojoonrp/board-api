@@ -1,8 +1,10 @@
 package main
 
 import (
+	"log"
 	"os"
 
+	"seojoonrp/board-api/internal/apperror"
 	"seojoonrp/board-api/internal/database"
 	"seojoonrp/board-api/internal/handler"
 	"seojoonrp/board-api/internal/repository"
@@ -37,8 +39,25 @@ func main() {
 	userHandler := handler.NewUserHandler(userSvc)
 
 	e := echo.New()
-
-	e.Use(middleware.Logger())
+	e.HTTPErrorHandler = apperror.Handler
+	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogStatus:   true,
+		LogURI:      true,
+		LogMethod:   true,
+		LogLatency:  true,
+		LogError:    true,
+		HandleError: true,
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			if v.Error != nil {
+				log.Printf("%s %s %d %s ERROR: %v\n",
+					v.Method, v.URI, v.Status, v.Latency, v.Error)
+			} else {
+				log.Printf("%s %s %d %s\n",
+					v.Method, v.URI, v.Status, v.Latency)
+			}
+			return nil
+		},
+	}))
 	e.Use(middleware.Recover())
 
 	server.SetupRoutes(e, postHandler, userHandler, jwtSecret)

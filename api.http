@@ -7,7 +7,7 @@ POST {{baseUrl}}/users
 Content-Type: application/json
 
 {
-  "username": "bob"
+  "username": "alice"
 }
 
 ### 게시글 작성
@@ -17,8 +17,8 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "title": "bob 게시글",
-  "body": "안녕하세요, 본문입니다."
+  "title": "alice 게시글",
+  "body": "본문임."
 }
 
 ### 전체 게시글 조회

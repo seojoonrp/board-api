@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"seojoonrp/board-api/internal/apperror"
 	"seojoonrp/board-api/internal/dto"
 	"seojoonrp/board-api/internal/middleware"
 	"seojoonrp/board-api/internal/service"
@@ -25,7 +26,7 @@ func (h *PostHandler) Create(c echo.Context) error {
 
 	var req dto.CreatePostRequest
 	if err := c.Bind(&req); err != nil {
-		return err
+		return apperror.NewBadRequest("invalid request body")
 	}
 
 	post, err := h.svc.Create(c.Request().Context(), req, userID)

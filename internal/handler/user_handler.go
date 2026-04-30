@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"seojoonrp/board-api/internal/apperror"
 	"seojoonrp/board-api/internal/dto"
 	"seojoonrp/board-api/internal/service"
 
@@ -19,7 +20,7 @@ func NewUserHandler(svc service.UserService) UserHandler {
 func (h *UserHandler) Login(c echo.Context) error {
 	var req dto.LoginRequest
 	if err := c.Bind(&req); err != nil {
-		return err
+		return apperror.NewBadRequest("invalid request body")
 	}
 
 	resp, err := h.svc.Login(c.Request().Context(), req)

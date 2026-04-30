@@ -3,6 +3,7 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"seojoonrp/board-api/internal/apperror"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -19,7 +20,7 @@ func JWTAuth(secret string) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			authHeader := c.Request().Header.Get("Authorization")
 			if !strings.HasPrefix(authHeader, "Bearer ") {
-				return echo.NewHTTPError(http.StatusUnauthorized, "missing or invalid authorization header")
+				return apperror.NewUnauthorized("missing or invalid authorization header")
 			}
 
 			tokenString := strings.TrimPrefix(authHeader, "Bearer ")
@@ -33,12 +34,12 @@ func JWTAuth(secret string) echo.MiddlewareFunc {
 
 			token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, keyFunc)
 			if err != nil || !token.Valid {
-				return echo.NewHTTPError(http.StatusUnauthorized, "invalid or expired token")
+				return apperror.NewUnauthorized("invalid or expired token")
 			}
 
 			claims, ok := token.Claims.(*JWTClaims)
 			if !ok {
-				return echo.NewHTTPError(http.StatusUnauthorized, "invalid token claims")
+				return apperror.NewUnauthorized("invalid token claims")
 			}
 
 			c.Set("userID", claims.UserID)

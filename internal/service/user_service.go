@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"seojoonrp/board-api/internal/apperror"
 	"seojoonrp/board-api/internal/domain"
 	"seojoonrp/board-api/internal/dto"
 	"seojoonrp/board-api/internal/repository"
@@ -32,12 +33,12 @@ func (s *userService) Login(ctx context.Context, req dto.LoginRequest) (*dto.Log
 
 	err := s.userRepo.Save(ctx, newUser)
 	if err != nil {
-		return nil, err
+		return nil, apperror.NewInternal(err)
 	}
 
 	token, err := s.createJWT(newUser.ID.Hex())
 	if err != nil {
-		return nil, err
+		return nil, apperror.NewInternal(err)
 	}
 
 	return &dto.LoginResponse{
