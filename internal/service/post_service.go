@@ -7,9 +7,6 @@ import (
 	"seojoonrp/board-api/internal/domain"
 	"seojoonrp/board-api/internal/dto"
 	"seojoonrp/board-api/internal/repository"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type PostService interface {
@@ -29,30 +26,13 @@ func NewPostService(postRepo repository.PostRepo, userRepo repository.UserRepo) 
 }
 
 func (s *postService) Create(ctx context.Context, req dto.CreatePostRequest, userID string) (*dto.PostItem, error) {
-	uID, err := primitive.ObjectIDFromHex(userID)
+	post, err := s.postRepo.Create(ctx, userID, req.Title, req.Body)
 	if err != nil {
-		return nil, apperror.NewBadRequest("invalid user id:" + userID)
+		return nil, mapRepoErr(err, "user", userID)
 	}
 
-	newPost := domain.Post{
-		ID:     primitive.NewObjectID(),
-		UserID: uID,
-		Title:  req.Title,
-		Body:   req.Body,
-		View:   0,
-	}
-
-	err = s.postRepo.Save(ctx, newPost)
-	if err != nil {
-		return nil, apperror.NewInternal(err)
-	}
-
-	return &dto.PostItem{
-		ID:    newPost.ID.Hex(),
-		Title: newPost.Title,
-		Body:  newPost.Body,
-		View:  newPost.View,
-	}, nil
+	item := toPostItem(post)
+	return &item, nil
 }
 
 func (s *postService) GetAll(ctx context.Context) ([]dto.PostItem, error) {
@@ -61,68 +41,58 @@ func (s *postService) GetAll(ctx context.Context) ([]dto.PostItem, error) {
 		return nil, apperror.NewInternal(err)
 	}
 
-	items := make([]dto.PostItem, 0, len(posts))
-	for _, p := range posts {
-		items = append(items, dto.PostItem{
-			ID:    p.ID.Hex(),
-			Title: p.Title,
-			Body:  p.Body,
-			View:  p.View,
-		})
-	}
-
-	return items, nil
+	return toPostItems(posts), nil
 }
 
 func (s *postService) GetByUserID(ctx context.Context, userID string) ([]dto.PostItem, error) {
-	uID, err := primitive.ObjectIDFromHex(userID)
+	posts, err := s.postRepo.FindAllByUserID(ctx, userID)
 	if err != nil {
-		return nil, apperror.NewBadRequest("invalid user id: " + userID)
+		return nil, mapRepoErr(err, "user", userID)
 	}
 
-	posts, err := s.postRepo.FindAllByUserID(ctx, uID)
-	if err != nil {
-		return nil, apperror.NewInternal(err)
-	}
-
-	items := make([]dto.PostItem, 0, len(posts))
-	for _, p := range posts {
-		items = append(items, dto.PostItem{
-			ID:    p.ID.Hex(),
-			Title: p.Title,
-			Body:  p.Body,
-			View:  p.View,
-		})
-	}
-
-	return items, nil
+	return toPostItems(posts), nil
 }
 
 func (s *postService) Get(ctx context.Context, id string) (*dto.PostItem, error) {
-	pID, err := primitive.ObjectIDFromHex(id)
+	post, err := s.postRepo.FindByID(ctx, id)
 	if err != nil {
-		return nil, apperror.NewBadRequest("invalid post id: " + id)
-	}
-
-	post, err := s.postRepo.FindByID(ctx, pID)
-	if err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			return nil, apperror.NewNotFound("post not found: " + id)
-		}
-		return nil, apperror.NewInternal(err)
+		return nil, mapRepoErr(err, "post", id)
 	}
 
 	// TODO: Transaction
-	err = s.postRepo.IncrementView(ctx, pID)
-	if err != nil {
-		return nil, apperror.NewInternal(err)
+	if err := s.postRepo.IncrementView(ctx, id); err != nil {
+		return nil, mapRepoErr(err, "post", id)
 	}
 	post.View++
 
-	return &dto.PostItem{
-		ID:    post.ID.Hex(),
-		Title: post.Title,
-		Body:  post.Body,
-		View:  post.View,
-	}, nil
+	item := toPostItem(post)
+	return &item, nil
+}
+
+func mapRepoErr(err error, kind, id string) error {
+	switch {
+	case errors.Is(err, repository.ErrInvalidID):
+		return apperror.NewBadRequest("invalid " + kind + " id: " + id)
+	case errors.Is(err, repository.ErrNotFound):
+		return apperror.NewNotFound(kind + " not found: " + id)
+	default:
+		return apperror.NewInternal(err)
+	}
+}
+
+func toPostItem(p *domain.Post) dto.PostItem {
+	return dto.PostItem{
+		ID:    p.ID.Hex(),
+		Title: p.Title,
+		Body:  p.Body,
+		View:  p.View,
+	}
+}
+
+func toPostItems(posts []domain.Post) []dto.PostItem {
+	items := make([]dto.PostItem, 0, len(posts))
+	for _, p := range posts {
+		items = append(items, toPostItem(&p))
+	}
+	return items
 }

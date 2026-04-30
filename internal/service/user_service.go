@@ -3,13 +3,11 @@ package service
 import (
 	"context"
 	"seojoonrp/board-api/internal/apperror"
-	"seojoonrp/board-api/internal/domain"
 	"seojoonrp/board-api/internal/dto"
 	"seojoonrp/board-api/internal/repository"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type UserService interface {
@@ -26,25 +24,20 @@ func NewUserService(userRepo repository.UserRepo, jwtSecret string) UserService 
 }
 
 func (s *userService) Login(ctx context.Context, req dto.LoginRequest) (*dto.LoginResponse, error) {
-	newUser := domain.User{
-		ID:       primitive.NewObjectID(),
-		Username: req.Username,
-	}
-
-	err := s.userRepo.Save(ctx, newUser)
+	user, err := s.userRepo.Create(ctx, req.Username)
 	if err != nil {
 		return nil, apperror.NewInternal(err)
 	}
 
-	token, err := s.createJWT(newUser.ID.Hex())
+	token, err := s.createJWT(user.ID.Hex())
 	if err != nil {
 		return nil, apperror.NewInternal(err)
 	}
 
 	return &dto.LoginResponse{
 		User: dto.UserItem{
-			ID:       newUser.ID.Hex(),
-			Username: req.Username,
+			ID:       user.ID.Hex(),
+			Username: user.Username,
 		},
 		Token: token,
 	}, nil
