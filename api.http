@@ -1,0 +1,44 @@
+@baseUrl = http://localhost:8080
+@token = {{login.response.body.token}}
+
+### 로그인
+# @name login
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "username": "bob"
+}
+
+### 게시글 작성
+# @name createPost
+POST {{baseUrl}}/posts
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "bob 게시글",
+  "body": "안녕하세요, 본문입니다."
+}
+
+### 전체 게시글 조회
+GET {{baseUrl}}/posts
+
+### 만든 게시글 조회
+GET {{baseUrl}}/posts/{{createPost.response.body.id}}
+
+### 본인 게시글 조회
+GET {{baseUrl}}/posts?author={{login.response.body.user.id}}
+Authorization: Bearer {{token}}
+
+### 없는 게시글 조회
+GET {{baseUrl}}/posts/1
+
+### 인증 없는 게시글 작성
+POST {{baseUrl}}/posts
+Content-Type: application/json
+
+{
+  "title": "인증 없이",
+  "body": "실패해야 함"
+}

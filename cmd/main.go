@@ -9,12 +9,14 @@ import (
 	"seojoonrp/board-api/internal/server"
 	"seojoonrp/board-api/internal/service"
 
+	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
 	// TODO: Separate config logic
+	_ = godotenv.Load()
 	uri := os.Getenv("MONGO_URI")
 	dbName := os.Getenv("MONGO_DB")
 	jwtSecret := os.Getenv("JWT_SECRET")
