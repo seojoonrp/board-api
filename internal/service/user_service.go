@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"seojoonrp/board-api/internal/apperror"
-	"seojoonrp/board-api/internal/dto"
+	"seojoonrp/board-api/internal/domain"
 	"seojoonrp/board-api/internal/repository"
 	"time"
 
@@ -11,7 +11,7 @@ import (
 )
 
 type UserService interface {
-	Login(ctx context.Context, req dto.LoginRequest) (*dto.LoginResponse, error)
+	Login(ctx context.Context, req domain.LoginRequest) (*domain.LoginResponse, error)
 }
 
 type userService struct {
@@ -23,7 +23,7 @@ func NewUserService(userRepo repository.UserRepo, jwtSecret string) UserService 
 	return &userService{userRepo: userRepo, jwtSecret: jwtSecret}
 }
 
-func (s *userService) Login(ctx context.Context, req dto.LoginRequest) (*dto.LoginResponse, error) {
+func (s *userService) Login(ctx context.Context, req domain.LoginRequest) (*domain.LoginResponse, error) {
 	user, err := s.userRepo.Create(ctx, req.Username)
 	if err != nil {
 		return nil, apperror.NewInternal(err)
@@ -34,11 +34,8 @@ func (s *userService) Login(ctx context.Context, req dto.LoginRequest) (*dto.Log
 		return nil, apperror.NewInternal(err)
 	}
 
-	return &dto.LoginResponse{
-		User: dto.UserItem{
-			ID:       user.ID.Hex(),
-			Username: user.Username,
-		},
+	return &domain.LoginResponse{
+		User:  *user,
 		Token: token,
 	}, nil
 }

@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 	"seojoonrp/board-api/internal/apperror"
-	"seojoonrp/board-api/internal/dto"
+	"seojoonrp/board-api/internal/domain"
 	"seojoonrp/board-api/internal/service"
 
 	"github.com/labstack/echo/v4"
@@ -18,7 +18,7 @@ func NewUserHandler(svc service.UserService) UserHandler {
 }
 
 func (h *UserHandler) Login(c echo.Context) error {
-	var req dto.LoginRequest
+	var req domain.LoginRequest
 	if err := c.Bind(&req); err != nil {
 		return apperror.NewBadRequest("invalid request body")
 	}

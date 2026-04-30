@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 	"seojoonrp/board-api/internal/apperror"
-	"seojoonrp/board-api/internal/dto"
+	"seojoonrp/board-api/internal/domain"
 	"seojoonrp/board-api/internal/middleware"
 	"seojoonrp/board-api/internal/service"
 
@@ -24,7 +24,7 @@ func (h *PostHandler) Create(c echo.Context) error {
 		return err
 	}
 
-	var req dto.CreatePostRequest
+	var req domain.CreatePostRequest
 	if err := c.Bind(&req); err != nil {
 		return apperror.NewBadRequest("invalid request body")
 	}
