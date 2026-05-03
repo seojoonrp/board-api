@@ -8,14 +8,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 )
 
-baseURL := "http://localhost:8080"
+var baseURL = "http://localhost:8080"
 
 type loginResp struct {
 	User  struct{ ID string } `json:"user"`
@@ -108,11 +107,13 @@ func TestIncrementView_Concurrent(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			<-start
+
 			resp, err := http.Get(baseURL + "/posts/" + postID)
 			if err != nil {
 				failed.Add(1)
 				return
 			}
+
 			io.Copy(io.Discard, resp.Body)
 			resp.Body.Close()
 			if resp.StatusCode != http.StatusOK {
@@ -131,8 +132,8 @@ func TestIncrementView_Concurrent(t *testing.T) {
 	final := getPost(t, postID)
 	expected := N + 1
 	if final.View != expected {
-		t.Errorf("view=%d, want %d — lost updates detected", final.View, expected)
+		t.Errorf("view=%d, want %d - lost updates detected", final.View, expected)
 	} else {
-		t.Logf("view=%d (atomic OK)", final.View)
+		t.Logf("view=%d, atomic test success", final.View)
 	}
 }
