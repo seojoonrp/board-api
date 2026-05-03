@@ -28,6 +28,10 @@ func main() {
 	}
 	defer database.Disconnect(db)
 
+	if err := database.EnsureIndexes(db); err != nil {
+		panic(err)
+	}
+
 	postRepo := repository.NewPostRepo(db.Collection("posts"))
 	userRepo := repository.NewUserRepo(db.Collection("users"))
 
