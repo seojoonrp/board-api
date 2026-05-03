@@ -68,9 +68,9 @@ func (s *postService) Get(ctx context.Context, id string) (*domain.Post, error) 
 
 func mapRepoErr(err error, kind, id string) error {
 	switch {
-	case errors.Is(err, repository.ErrInvalidID):
+	case errors.Is(err, domain.ErrInvalidID):
 		return apperror.NewBadRequest("invalid " + kind + " id: " + id)
-	case errors.Is(err, repository.ErrNotFound):
+	case errors.Is(err, domain.ErrNotFound):
 		return apperror.NewNotFound(kind + " not found: " + id)
 	default:
 		return apperror.NewInternal(err)

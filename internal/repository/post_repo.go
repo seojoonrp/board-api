@@ -30,7 +30,7 @@ func NewPostRepo(coll *mongo.Collection) PostRepo {
 func (r *postRepo) Create(ctx context.Context, userID, title, body string) (*domain.Post, error) {
 	uID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
-		return nil, ErrInvalidID
+		return nil, domain.ErrInvalidID
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -71,7 +71,7 @@ func (r *postRepo) FindAll(ctx context.Context) ([]domain.Post, error) {
 func (r *postRepo) FindByID(ctx context.Context, id string) (*domain.Post, error) {
 	pID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return nil, ErrInvalidID
+		return nil, domain.ErrInvalidID
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -81,7 +81,7 @@ func (r *postRepo) FindByID(ctx context.Context, id string) (*domain.Post, error
 	err = r.coll.FindOne(ctx, bson.M{"_id": pID}).Decode(&post)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return nil, ErrNotFound
+			return nil, domain.ErrNotFound
 		}
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func (r *postRepo) FindByID(ctx context.Context, id string) (*domain.Post, error
 func (r *postRepo) FindAllByUserID(ctx context.Context, userID string) ([]domain.Post, error) {
 	uID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
-		return nil, ErrInvalidID
+		return nil, domain.ErrInvalidID
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -114,7 +114,7 @@ func (r *postRepo) FindAllByUserID(ctx context.Context, userID string) ([]domain
 func (r *postRepo) IncrementView(ctx context.Context, id string) error {
 	pID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return ErrInvalidID
+		return domain.ErrInvalidID
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)

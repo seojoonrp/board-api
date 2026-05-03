@@ -17,7 +17,6 @@ import (
 )
 
 func main() {
-	// TODO: Separate config logic
 	_ = godotenv.Load()
 	uri := os.Getenv("MONGO_URI")
 	dbName := os.Getenv("MONGO_DB")
